@@ -4,40 +4,45 @@ using Aspose.CAD.FileFormats.Cad.CadConsts;
 using Aspose.CAD.FileFormats.Cad.CadObjects;
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
 
 
 public class ExtractDataFromDWG
 {
+ 
     public List<CalculationEntry> Value(string fileName)
     {
         List<CalculationEntry> calculationEntries = new List<CalculationEntry>();
+        List<CadLwPolyline> lwPolyline = new List<CadLwPolyline>();
+
         using (Aspose.CAD.FileFormats.Cad.CadImage image = (Aspose.CAD.FileFormats.Cad.CadImage)Image.Load(fileName))
         {
-            List<CadLwPolyline> lwPolyline = new List<CadLwPolyline>();
-
-            // Go through each entity inside the DWG file
-            foreach (CadEntityBase baseEntity in image.Entities)
+            //Go through each entity inside the DWG file
+            foreach (var blockEntity in image.BlockEntities.Values)
             {
-                Console.WriteLine(baseEntity.TypeName);
-                // selection or filtration of entities
-                if (baseEntity.TypeName == CadEntityTypeName.LWPOLYLINE)
+                var cadBlockEntity= (CadBlockEntity)blockEntity;
+
+                foreach (CadEntityBase baseEntity in cadBlockEntity.Entities)
                 {
-                    var cadLwPolyLine = (CadLwPolyline)baseEntity;
-                    //Thickness defines that this polyline is the arial view of the Object --> Therefore we need it for the Area and Laufmeter calculation
-                    if (cadLwPolyLine.Thickness != 0)
+                    Console.WriteLine(baseEntity.TypeName);
+                    ;
+                    // selection or filtration of entities
+                    if (baseEntity.TypeName == CadEntityTypeName.LWPOLYLINE)
                     {
-                        lwPolyline.Add(cadLwPolyLine);
+                        var cadLwPolyLine = (CadLwPolyline)baseEntity;
+                        //Thickness defines that this polyline is the arial view of the Object --> Therefore we need it for the Area and Laufmeter calculation
+                        if (cadLwPolyLine.Thickness != 0)
+                        {
+                            lwPolyline.Add(cadLwPolyLine);
+                        }
                     }
-                    
                 }
             }
             var unitType = image.UnitType;
             var excelRowNumber = 2;
             foreach (var polyLine in lwPolyline)
-            {
-                var laufmeter =(int) Math.Round(polyLine.Length, 0);
-                var flaeche = (int)Math.Round(polyLine.Area, 0);
+                {
+                var laufmeter =Math.Round(polyLine.Length/1000, 2);
+                var flaeche = Math.Round(polyLine.Area/1000000, 2);
                 var dicke = (int)Math.Round(polyLine.Thickness,0);
                 var outputString = $"{polyLine.Id} --> Laufmeter: {laufmeter} {unitType}, Fläche: {flaeche} {unitType}, Dicke: {dicke}";
                 Console.WriteLine(outputString);
@@ -48,14 +53,19 @@ public class ExtractDataFromDWG
                     Laufmeter = laufmeter,
                     Flaeche = flaeche,
                     Thickness = dicke,
-                    KostenGesamtLaufmeter = $"=(C{excelRowNumber}/100)*D{excelRowNumber}",
-                    KostenGesamtFlaeche = $"=(F{excelRowNumber}/100)*G{excelRowNumber}",
-                    KostenQuadratmeterUndLaufmeter = $"=E{excelRowNumber}+H{excelRowNumber}"
+                    Stueck=1,
+                    KostenGesamtLaufmeter = $"=D{excelRowNumber}*E{excelRowNumber}*C{excelRowNumber}",
+                    KostenGesamtFlaeche = $"=G{excelRowNumber}*H{excelRowNumber}*C{excelRowNumber}",
+                    KostenQuadratmeterUndLaufmeter = $"=F{excelRowNumber}+I{excelRowNumber}",
+                    FertigmasLength = 0,
+                    FertigmasBreite =0,
+                    RohmasLength = $"=M{excelRowNumber}-16",
+                    RohmasBreite = $"=L{excelRowNumber}-16"
                 };
                 //Only the first Line schould contain the sum
                 //if (excelRowNumber == 2)
                 //{
-                //    calculationEntry.SummeGesamt = $"=SUMME(I2:I1000)";
+                //    calculationEntry.SummeGesamt = $"=SUMME(K2:K1000)";
                 //}
                 calculationEntries.Add(calculationEntry) ;
                 
