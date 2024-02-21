@@ -8,33 +8,45 @@ public class CalculationEntry
     [Name("Id")]
     public String Id { get; set; }
 
-    [Name("Thickness (mm)")]
+    [Name("Position")]
     public int Thickness { get; set; }
 
-    [Name("Laufmeter (mm)")]
-    public int Laufmeter { get; set; }
+    [Name("Stück")]
+    public int Stueck { get; set; }
+
+    [Name("Laufmeter (m)")]
+    public double Laufmeter { get; set; }
 
     [Name("Preis Pro Laufmeter")]
-    public int PreisProLaufmeter { get; set; }
+    public double PreisProLaufmeter { get; set; }
 
     [Name("Kosten gesamt Laufmeter")]
     public string KostenGesamtLaufmeter { get; set; }
 
-    [Name("Quadratmeter (mm)")]
-    public int Flaeche { get; set; }
+    [Name("Quadratmeter (m2)")]
+    public double Flaeche { get; set; }
 
     [Name("Preis pro Quadratmeter")]
-    public int PreisProQuadratMeter { get; set; }
+    public double PreisProQuadratMeter { get; set; }
 
     [Name("Kosten gesamt Quadratmeter")]
     public string KostenGesamtFlaeche { get; set; }
 
-    [Name("Kosten Laufmeter + Quadratmeter ")]
+    [Name("Kosten Laufmeter + Quadratmeter")]
     public string KostenQuadratmeterUndLaufmeter { get; set; }
 
     [Name("Kosten Gesamt Projekt")]
     public string SummeGesamt { get; set; }
 
+    [Name("Fertig Breite")]
+    public int FertigmasBreite { get; set; }
+    [Name("Fertig Länge")]
+    public int FertigmasLength { get; set; }
+
+    [Name("Roh Breite")]
+    public string RohmasBreite { get; set; }
+    [Name("Roh Länge")]
+    public string RohmasLength { get; set; }
 
 }
 

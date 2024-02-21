@@ -8,6 +8,7 @@ using System.Text;
 using System;
 using NPOI.SS.UserModel;
 using NPOI.HSSF.UserModel;
+using NPOI.SS.Util;
 
 public class ExportToExcel
 {
@@ -71,6 +72,12 @@ public class ExportToExcel
                         rowExcel.CreateCell(i).SetCellType(CellType.Formula);
                         rowExcel.CreateCell(i).SetCellFormula(data.Remove(0, 1)); //Remove the = from the formular
                     }
+                    else if (headerName.Contains(".")){
+                        rowExcel.CreateCell(i).SetCellType(CellType.Numeric);
+                        DecimalFormat df = new DecimalFormat("#,##0.00");
+                        var formattedValue = df.Format(data);
+                        rowExcel.CreateCell(i).SetCellValue(formattedValue);
+                    }
                     else
                     {
                         rowExcel.CreateCell(i).SetCellType(CellType.Numeric);
@@ -97,4 +104,5 @@ public class ExportToExcel
     }
 
 }
+
 
