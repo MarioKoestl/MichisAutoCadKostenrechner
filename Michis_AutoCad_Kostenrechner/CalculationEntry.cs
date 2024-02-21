@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using CsvHelper.Configuration.Attributes;
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 public class CalculationEntry
@@ -47,6 +48,9 @@ public class CalculationEntry
     public string RohmasBreite { get; set; }
     [Name("Roh Länge")]
     public string RohmasLength { get; set; }
+
+    [Name("Abmessungen")]
+    public List<double> Abmessungen { get; set; }
 
 }
 
