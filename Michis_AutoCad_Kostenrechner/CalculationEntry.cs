@@ -6,8 +6,8 @@ using System.Text.Json.Serialization;
 
 public class CalculationEntry
 {
-    [Name("Id")]
-    public String Id { get; set; }
+    //[Name("Id")]
+    //public String Id { get; set; }
 
     [Name("Position")]
     public int Thickness { get; set; }

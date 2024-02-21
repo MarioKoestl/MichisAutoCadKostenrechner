@@ -4,8 +4,7 @@ using Aspose.CAD.FileFormats.Cad.CadConsts;
 using Aspose.CAD.FileFormats.Cad.CadObjects;
 using System;
 using System.Collections.Generic;
-
-
+using System.Linq;
 public class ExtractDataFromDWG
 {
     public static List<double> CalculateSegmentLengths(List<Cad2DPoint> points)
@@ -35,7 +34,7 @@ public class ExtractDataFromDWG
     {
         double deltaX = point2.X - point1.X;
         double deltaY = point2.Y - point1.Y;
-        return Math.Round(Math.Sqrt(deltaX * deltaX + deltaY * deltaY),2);
+        return Math.Round(Math.Sqrt(deltaX * deltaX + deltaY * deltaY),0);
     }
 
     public List<CalculationEntry> Value(string fileName)
@@ -68,6 +67,7 @@ public class ExtractDataFromDWG
             }
             var unitType = image.UnitType;
             var excelRowNumber = 2;
+            lwPolyline = lwPolyline.OrderBy(x => x.Thickness).ToList();
             foreach (var polyLine in lwPolyline)
             {
                
@@ -80,30 +80,51 @@ public class ExtractDataFromDWG
                 var coordinates = polyLine.Coordinates;
                 var lineLengths = CalculateSegmentLengths(coordinates);
 
+                var fertigmasLänge = 0;
+                var fertigmasBreite = 0;
+                if (lineLengths.Count == 4)
+                { //Calculate Length for Rectangles
+                    var uniqueLineLengths = lineLengths.Distinct().ToList();
+                    if(uniqueLineLengths.Count == 2)
+                    {
+                        if (uniqueLineLengths[0] > uniqueLineLengths[1])
+                        {
+                            fertigmasLänge = Convert.ToInt32(uniqueLineLengths[0]);
+                            fertigmasBreite = Convert.ToInt32(uniqueLineLengths[1]);
+                        }
+                        else
+                        {
+                            fertigmasLänge = Convert.ToInt32(uniqueLineLengths[1]);
+                            fertigmasBreite = Convert.ToInt32(uniqueLineLengths[0]);
+                        }
+                    }
+                }
+
 
                 var calculationEntry = new CalculationEntry
                 {
-                    Id = polyLine.Id,
+                   // Id = polyLine.Id,
                     Laufmeter = laufmeter,
                     Flaeche = flaeche,
                     Thickness = dicke,
                     Stueck=1,
-                    KostenGesamtLaufmeter = $"=D{excelRowNumber}*E{excelRowNumber}*C{excelRowNumber}",
-                    KostenGesamtFlaeche = $"=G{excelRowNumber}*H{excelRowNumber}*C{excelRowNumber}",
-                    KostenQuadratmeterUndLaufmeter = $"=F{excelRowNumber}+I{excelRowNumber}",
-                    FertigmasLength = 0,
-                    FertigmasBreite =0,
-                    RohmasLength = $"=M{excelRowNumber}-16",
-                    RohmasBreite = $"=L{excelRowNumber}-16",
+                    KostenGesamtLaufmeter = $"=C{excelRowNumber}*D{excelRowNumber}*B{excelRowNumber}",
+                    KostenGesamtFlaeche = $"=F{excelRowNumber}*G{excelRowNumber}*B{excelRowNumber}",
+                    KostenQuadratmeterUndLaufmeter = $"=E{excelRowNumber}+H{excelRowNumber}",
+                    FertigmasLength = fertigmasLänge,
+                    FertigmasBreite = fertigmasBreite,
+                    RohmasLength = $"=L{excelRowNumber}-16",
+                    RohmasBreite = $"=K{excelRowNumber}-16",
                     Abmessungen = lineLengths
                 };
+                
                 //Only the first Line schould contain the sum
                 //if (excelRowNumber == 2)
                 //{
                 //    calculationEntry.SummeGesamt = $"=SUMME(K2:K1000)";
                 //}
-                calculationEntries.Add(calculationEntry) ;
-                
+                calculationEntries.Add(calculationEntry);
+
                 excelRowNumber++;
             }
 

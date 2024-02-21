@@ -10,15 +10,14 @@ using NPOI.SS.UserModel;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.Util;
 using NPOI.POIFS.Crypt.Dsig;
+using CsvHelper.Configuration.Attributes;
+using System.Reflection;
+using System.Linq;
+using NPOI.SS.Formula.Functions;
+using static Aspose.CAD.FileFormats.Cgm.Commands.InteriorStyle;
 
 public class ExportToExcel
 {
-    public void Run(FileNameReturnObject fileNameReturnObject, List<CalculationEntry> calculationEntries)
-    {
-        var csvFileName = convertToCsv(fileNameReturnObject, calculationEntries);
-        convertToExcel(csvFileName, fileNameReturnObject.FileName, ",", calculationEntries);
-
-    }
     public string convertToCsv(FileNameReturnObject fileNameReturnObject, List<CalculationEntry> calculationEntries)
     {
         string csvFileName = fileNameReturnObject.FullFilePath.Replace(".dwg", ".csv");
@@ -31,28 +30,17 @@ public class ExportToExcel
         }
         return csvFileName;
     }
-    public void convertToExcel(string csvFilePath, string fileName, string splitter, List<CalculationEntry> calculationEntries)
+    public void ConvertToExcel(FileNameReturnObject fileNameReturnObject, List<CalculationEntry> calculationEntries)
     {
         string excelDirectory = @"C:\\Users\\Michal\\Desktop\\Michis AutoCAD Kostenrechnungen\";
         //string excelDirectory = @"C:\\temp\\";
 
-        var excelFilePath = excelDirectory + fileName;
+        var excelFilePath = excelDirectory + fileNameReturnObject.FileName;
         string newFileName = excelFilePath.Replace(".dwg", ".xls");
 
-        string[] lines = File.ReadAllLines(csvFilePath, Encoding.UTF8);
-
-        int columnCounter = 0;
-
-        foreach (string s in lines)
-        {
-            string[] ss = s.Trim().Split(Convert.ToChar(splitter));
-
-            if (ss.Length > columnCounter)
-                columnCounter = ss.Length;
-        }
-
+     
         HSSFWorkbook workbook = new HSSFWorkbook();
-        CreateKostenSheet(splitter, lines, columnCounter, workbook);
+        CreateKostenSheet(workbook, calculationEntries);
         CreateAbmessungenSheet(workbook, calculationEntries);
 
         //Delete Excel File if existent
@@ -65,63 +53,83 @@ public class ExportToExcel
 
         Console.WriteLine($"Neues Excel wurde erfolgreich erstellt: {newFileName}");
     }
-
-    private void CreateKostenSheet(string splitter, string[] lines, int columnCounter, HSSFWorkbook workbook)
+    private void CreateKostenSheet(HSSFWorkbook workbook, List<CalculationEntry> calculationEntries)
     {
         var sheetKosten = workbook.CreateSheet("Kosten");
-        var rowIndex = 0;
-        var rowExcel = sheetKosten.CreateRow(rowIndex);
+        var rowExcel = sheetKosten.CreateRow(0);
 
-        for (int lineNumber = 0; lineNumber < lines.Length; lineNumber++)
+        //Create Header row
+        int columnCounter = 0;
+        var calculationEntryType= typeof(CalculationEntry);
+        foreach (PropertyInfo property in calculationEntryType.GetProperties())
         {
-            var s = lines[lineNumber];
-            rowExcel = sheetKosten.CreateRow(rowIndex);
+            
+            var displayNameAttribute = property.GetCustomAttribute<NameAttribute>();
+            string displayName = displayNameAttribute?.Names.FirstOrDefault() ?? property.Name;
 
-            string[] ss = s.Trim().Split(Convert.ToChar(splitter));
-
-            for (int i = 0; i < columnCounter; i++)
+            //Abmessungne will be set in new Sheet
+            if (displayName != "Abmessungen")
             {
-                var headerName = ss[i];
-                string data = !String.IsNullOrEmpty("s") && i < ss.Length ? ss[i] : "";
-
-                if (lineNumber <= 0)
-                {
-                    rowExcel.CreateCell(i).SetCellType(CellType.String);
-                    rowExcel.CreateCell(i).SetCellValue(data);
-                }
-                else
-                {
-                    if (headerName.StartsWith("="))
-                    {
-                        rowExcel.CreateCell(i).SetCellType(CellType.Formula);
-                        rowExcel.CreateCell(i).SetCellFormula(data.Remove(0, 1)); //Remove the = from the formular
-                    }
-                    else if (headerName.Contains("."))
-                    {
-                        rowExcel.CreateCell(i).SetCellType(CellType.Numeric);
-                        DecimalFormat df = new DecimalFormat("#,##0.00");
-                        var formattedValue = df.Format(data);
-                        rowExcel.CreateCell(i).SetCellValue(formattedValue);
-                    }
-                    else
-                    {
-                        rowExcel.CreateCell(i).SetCellType(CellType.Numeric);
-                        rowExcel.CreateCell(i).SetCellValue(data);
-                    }
-                }
-
+                rowExcel.CreateCell(columnCounter).SetCellType(CellType.String);
+                rowExcel.CreateCell(columnCounter).SetCellValue(displayName);
             }
-
-            rowIndex++;
+            columnCounter++;
         }
+
+        for (int rowIndex = 0; rowIndex < calculationEntries.Count; rowIndex++)
+        {
+            rowExcel = sheetKosten.CreateRow(rowIndex+1);
+            var calculationEntry = calculationEntries[rowIndex];
+            columnCounter = 0;
+            foreach (var property in calculationEntryType.GetProperties())
+            {
+                var propertyValue = property.GetValue(calculationEntry);
+                if (propertyValue != null)
+                {
+                    if (property.PropertyType == typeof(string))
+                    {
+                        var data = propertyValue.ToString();
+                        if (data != null && data.StartsWith("="))
+                        {
+                            rowExcel.CreateCell(columnCounter).SetCellType(CellType.Formula);
+                            rowExcel.CreateCell(columnCounter).SetCellFormula(data.Remove(0, 1)); //Remove the = from the formular
+                        }
+                        else
+                        {
+                            rowExcel.CreateCell(columnCounter).SetCellType(CellType.String);
+                            rowExcel.CreateCell(columnCounter).SetCellFormula(data);
+                        }
+                    }
+                    if (property.PropertyType == typeof(double))
+                    {
+                        var data = propertyValue.ToString();
+                        rowExcel.CreateCell(columnCounter).SetCellType(CellType.Numeric);
+                        DecimalFormat df = new DecimalFormat("#,##0.00");
+                        var formattedValue = df.Format(propertyValue);
+                        rowExcel.CreateCell(columnCounter).SetCellValue(formattedValue);
+                    }
+                    if (property.PropertyType == typeof(int))
+                    {
+                        var data = propertyValue.ToString();
+                        rowExcel.CreateCell(columnCounter).SetCellType(CellType.Numeric);
+                        rowExcel.CreateCell(columnCounter).SetCellValue(data);
+                    }
+                }
+                columnCounter++;
+            }
+        }
+        //Create GesamtKosten Row
+        rowExcel = sheetKosten.CreateRow(calculationEntries.Count);
+        rowExcel.CreateCell(9).SetCellType(CellType.Formula);
+        rowExcel.CreateCell(9).SetCellFormula("SUM(I:I)");
+      
         for (var i = 0; i < sheetKosten.GetRow(0).LastCellNum; i++)
             sheetKosten.AutoSizeColumn(i);
     }
 
     private void CreateAbmessungenSheet(HSSFWorkbook workbook, List<CalculationEntry> calculationEntries)
     {
-        var sheetAbmessungen = workbook.CreateSheet("Abmessungen");       
-
+        var sheetAbmessungen = workbook.CreateSheet("Abmessungen");
         for (int i = 0; i < calculationEntries.Count; i++)
         {
             var rowExcel = sheetAbmessungen.CreateRow(i);

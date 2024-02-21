@@ -10,8 +10,8 @@ namespace ConsoleApp
         {
             
             var fileNameObject = new GetFileName().Value();
-            var calcuationEntries = new ExtractDataFromDWG().Value(fileNameObject.FullFilePath);
-            new ExportToExcel().Run(fileNameObject, calcuationEntries);
+            var calculationEntries = new ExtractDataFromDWG().Value(fileNameObject.FullFilePath);
+            new ExportToExcel().ConvertToExcel(fileNameObject, calculationEntries);
             Console.ReadLine();
         }
     }
