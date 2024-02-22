@@ -2,34 +2,16 @@
 using System.IO;
 using CsvHelper;
 using System.Collections.Generic;
-using System.Globalization;
-using Aspose.CAD;
-using System.Text;
 using System;
 using NPOI.SS.UserModel;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.Util;
-using NPOI.POIFS.Crypt.Dsig;
 using CsvHelper.Configuration.Attributes;
 using System.Reflection;
 using System.Linq;
-using NPOI.SS.Formula.Functions;
-using static Aspose.CAD.FileFormats.Cgm.Commands.InteriorStyle;
 
 public class ExportToExcel
 {
-    public string convertToCsv(FileNameReturnObject fileNameReturnObject, List<CalculationEntry> calculationEntries)
-    {
-        string csvFileName = fileNameReturnObject.FullFilePath.Replace(".dwg", ".csv");
-
-        using (var writer = new StreamWriter(csvFileName))
-
-        using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-        {
-            csv.WriteRecords(calculationEntries);
-        }
-        return csvFileName;
-    }
     public void ConvertToExcel(FileNameReturnObject fileNameReturnObject, List<CalculationEntry> calculationEntries)
     {
         string excelDirectory = @"C:\\Users\\Michal\\Desktop\\Michis AutoCAD Kostenrechnungen\";
