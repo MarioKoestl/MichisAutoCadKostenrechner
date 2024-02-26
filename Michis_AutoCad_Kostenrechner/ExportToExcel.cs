@@ -9,13 +9,14 @@ using NPOI.SS.Util;
 using CsvHelper.Configuration.Attributes;
 using System.Reflection;
 using System.Linq;
+using NPOI.XWPF.UserModel;
 
 public class ExportToExcel
 {
     public void ConvertToExcel(FileNameReturnObject fileNameReturnObject, List<CalculationEntry> calculationEntries)
     {
-        string excelDirectory = @"C:\\Users\\Michal\\Desktop\\Michis AutoCAD Kostenrechnungen\";
-        //string excelDirectory = @"C:\\temp\\";
+        //string excelDirectory = @"C:\\Users\\Michal\\Desktop\\Michis AutoCAD Kostenrechnungen\";
+        string excelDirectory = @"C:\\temp\\";
 
         var excelFilePath = excelDirectory + fileNameReturnObject.FileName;
         string newFileName = excelFilePath.Replace(".dwg", ".xls");
@@ -84,7 +85,6 @@ public class ExportToExcel
                     }
                     if (property.PropertyType == typeof(double))
                     {
-                        var data = propertyValue.ToString();
                         rowExcel.CreateCell(columnCounter).SetCellType(CellType.Numeric);
                         DecimalFormat df = new DecimalFormat("#,##0.00");
                         var formattedValue = df.Format(propertyValue);
@@ -92,16 +92,19 @@ public class ExportToExcel
                     }
                     if (property.PropertyType == typeof(int))
                     {
-                        var data = propertyValue.ToString();
+                        //propertyValue=Convert.ToDecimal((int)propertyValue);
                         rowExcel.CreateCell(columnCounter).SetCellType(CellType.Numeric);
-                        rowExcel.CreateCell(columnCounter).SetCellValue(data);
+                        DecimalFormat df = new DecimalFormat("#,##0.0");
+                        var formattedValue = df.Format(propertyValue);
+                        rowExcel.CreateCell(columnCounter).SetCellValue(formattedValue);
+
                     }
                 }
                 columnCounter++;
             }
         }
         //Create GesamtKosten Row
-        rowExcel = sheetKosten.CreateRow(calculationEntries.Count);
+        rowExcel = sheetKosten.CreateRow(calculationEntries.Count+1);
         rowExcel.CreateCell(9).SetCellType(CellType.Formula);
         rowExcel.CreateCell(9).SetCellFormula("SUM(I:I)");
       

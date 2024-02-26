@@ -73,7 +73,7 @@ public class ExtractDataFromDWG
                
                 var laufmeter =Math.Round(polyLine.Length/1000, 2);
                 var flaeche = Math.Round(polyLine.Area/1000000, 2);
-                var dicke = (int)Math.Round(polyLine.Thickness,0);
+                var dicke = (int) Math.Round(polyLine.Thickness,0);
                 var outputString = $"{polyLine.Id} --> Laufmeter: {laufmeter} {unitType}, Fläche: {flaeche} {unitType}, Dicke: {dicke}";
                 Console.WriteLine(outputString);
 
